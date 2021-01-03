@@ -62,7 +62,7 @@ if __name__ == '__main__':
         else:
             data = data+'\n'
             f.write(data)
-        #f.close()
+        f.close()
 #dddd
 '''
 # 파일 하나만 뽑기
