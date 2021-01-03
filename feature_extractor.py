@@ -63,7 +63,7 @@ if __name__ == '__main__':
             data = data+'\n'
             f.write(data)
         f.close()
-
+#dddd
 '''
 # 파일 하나만 뽑기
     f = open("test_new", 'a+', encoding='utf8')
