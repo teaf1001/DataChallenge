@@ -10,3 +10,4 @@ if __name__=="__main__":
     #print(dir(bug))
     print(bug.dll_characteristics_lists)
     #print(dir(lief.PE.DataDirectory))
+    #hahaha
