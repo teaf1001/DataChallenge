@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import features_reboot as features
 import init
 import numpy as np
@@ -15,12 +17,12 @@ import os
 
 folders = sys.argv[1] # 추출 대상 파일 경로
 csv_path = sys.argv[2] # 정답지 경로
-savename = csv_path.split('/')[2].split('_')[0]
+savename = csv_path.split('\\')[1].split('_')[0]
 # 피쳐 저장 이름
 
 # 라벨 매핑
 def label_check(hash):
-    with open(csv_path, 'r') as reader:
+    with open(csv_path, 'r', encoding='UTF8') as reader:
         for line in reader:
             fields = line.strip().split(',')
             if fields[0].startswith(hash):
@@ -30,7 +32,7 @@ def label_check(hash):
 def extract(filename):
     mal_data = open(filename, 'rb').read() # 실행 파일 열기
     extractor = init.features.PEFeatureExtractor(2) #인자 2 고정
-    filehash=filename.split("/")[-1].split('.vir')[0]
+    filehash=filename.split("\\")[-1].split('.vir')[0]
     try:
         features = extractor.raw_features(mal_data, filename) # 피쳐 추출
         features['label'] = label_check(filehash) # 라벨 매핑

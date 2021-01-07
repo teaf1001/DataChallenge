@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/python
 
 import re
@@ -1166,7 +1167,7 @@ class PEFeatureExtractor(object):
             ExportsInfo(),
             TLSInfo(),
             SignatureInfo(),
-            ContentInfo(),
+            #ContentInfo(),
             SignerInfo(),
             DosHeaderInfo(),
             #:AuthenticatedAttributesInfo(),
