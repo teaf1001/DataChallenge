@@ -324,18 +324,15 @@ class HeaderFileInfo(FeatureType):
     ''' Machine, architecure, OS, linker and other information extracted from header '''
 
     name = 'header'
-    dim = 92
+    dim = 12
 
     def __init__(self):
         super(FeatureType, self).__init__()
 
     def raw_features(self, bytez, lief_binary):
         raw_obj = {}
-        raw_obj['coff'] = {'timestamp': 0, 'machine': "", 'characteristics': []}
+        raw_obj['coff'] = {'timestamp': 0,}
         raw_obj['optional'] = {
-            'subsystem': "",
-            'dll_characteristics': [],
-            'magic': "",
             'major_image_version': 0,
             'minor_image_version': 0,
             'major_linker_version': 0,
@@ -352,21 +349,12 @@ class HeaderFileInfo(FeatureType):
             return raw_obj
 
         raw_obj['coff']['timestamp'] = lief_binary.header.time_date_stamps
-        raw_obj['coff']['machine'] = str(lief_binary.header.machine).split('.')[-1]
-        raw_obj['coff']['characteristics'] = [str(c).split('.')[-1] for c in lief_binary.header.characteristics_list]
-        raw_obj['optional']['subsystem'] = str(lief_binary.optional_header.subsystem).split('.')[-1]
-        raw_obj['optional']['dll_characteristics'] = [
-            str(c).split('.')[-1] for c in lief_binary.optional_header.dll_characteristics_lists
-        ]
-        raw_obj['optional']['magic'] = str(lief_binary.optional_header.magic).split('.')[-1]
         raw_obj['optional']['major_image_version'] = lief_binary.optional_header.major_image_version
         raw_obj['optional']['minor_image_version'] = lief_binary.optional_header.minor_image_version
         raw_obj['optional']['major_linker_version'] = lief_binary.optional_header.major_linker_version
         raw_obj['optional']['minor_linker_version'] = lief_binary.optional_header.minor_linker_version
-        raw_obj['optional'][
-            'major_operating_system_version'] = lief_binary.optional_header.major_operating_system_version
-        raw_obj['optional'][
-            'minor_operating_system_version'] = lief_binary.optional_header.minor_operating_system_version
+        raw_obj['optional']['major_operating_system_version'] = lief_binary.optional_header.major_operating_system_version
+        raw_obj['optional']['minor_operating_system_version'] = lief_binary.optional_header.minor_operating_system_version
         raw_obj['optional']['major_subsystem_version'] = lief_binary.optional_header.major_subsystem_version
         raw_obj['optional']['minor_subsystem_version'] = lief_binary.optional_header.minor_subsystem_version
         raw_obj['optional']['sizeof_code'] = lief_binary.optional_header.sizeof_code
@@ -377,11 +365,6 @@ class HeaderFileInfo(FeatureType):
     def process_raw_features(self, raw_obj):
         return np.hstack([
             raw_obj['coff']['timestamp'],
-            FeatureHasher(16, input_type="string").transform([[raw_obj['coff']['machine']]]).toarray()[0],
-            FeatureHasher(16, input_type="string").transform([raw_obj['coff']['characteristics']]).toarray()[0],
-            FeatureHasher(16, input_type="string").transform([[raw_obj['optional']['subsystem']]]).toarray()[0],
-            FeatureHasher(16, input_type="string").transform([raw_obj['optional']['dll_characteristics']]).toarray()[0],
-            FeatureHasher(16, input_type="string").transform([[raw_obj['optional']['magic']]]).toarray()[0],
             raw_obj['optional']['major_image_version'],
             raw_obj['optional']['minor_image_version'],
             raw_obj['optional']['major_linker_version'],
@@ -494,28 +477,23 @@ class DataDirectories(FeatureType):
 
 class TLSInfo(FeatureType):
     name = 'TLS'
-    dim = 99
+    dim = 19
 
     def __init__(self):
         super(FeatureType, self).__init__()
 
     def raw_features(self, bytez, lief_binary):
-        raw_obj = {}
-        ## add the feature
+
         raw_obj = {
             'addressof_callbacks': 0,
             'addressof_index': 0,
             'addressof_raw_data': [0, 0],
-            'callbacks': [],
             'characteristics': 0,
-            'data_template': [],
             'has_data_directory': 0,
             'directory_has_section': 0,
             'directory_rva': 0,
             'directory_size': 0,
-            'directory_type': "",
             'has_section': 0,
-            'section_name': "",
             'section_size': 0,
             'section_entropy': 0,
             'section_vsize': 0,
@@ -524,7 +502,6 @@ class TLSInfo(FeatureType):
             'section_pointer_to_line_numbers': 0,
             'section_number_of_relocations': 0,
             'section_number_of_line_numbers': 0,
-            'section_characteristics': [],
             'sizeof_zero_fill': 0,
         }
 
@@ -534,9 +511,7 @@ class TLSInfo(FeatureType):
         raw_obj['addressof_callbacks'] = lief_binary.tls.addressof_callbacks
         raw_obj['addressof_index'] = lief_binary.tls.addressof_index
         raw_obj['addressof_raw_data'] = list(lief_binary.tls.addressof_raw_data)  # tuple to list
-        raw_obj['callbacks'] = [str(c).split('.')[-1] for c in lief_binary.tls.callbacks]
         raw_obj['characteristics'] = lief_binary.tls.characteristics
-        raw_obj['data_template'] = [str(c).split('.')[-1] for c in lief_binary.tls.data_template]
         raw_obj['has_data_directory'] = lief_binary.tls.has_data_directory
         raw_obj['has_section'] = lief_binary.tls.has_section
         raw_obj['sizeof_zero_fill'] = lief_binary.tls.sizeof_zero_fill
@@ -545,10 +520,8 @@ class TLSInfo(FeatureType):
             raw_obj['directory_has_section'] = lief_binary.tls.directory.has_section
             raw_obj['directory_rva'] = lief_binary.tls.directory.rva
             raw_obj['directory_size'] = lief_binary.tls.directory.size
-            raw_obj['directory_type'] = str(lief_binary.tls.directory.type).split('.')[-1]
 
         if lief_binary.tls.has_section is True:
-            raw_obj['section_name'] = lief_binary.tls.section.name
             raw_obj['section_size'] = lief_binary.tls.section.size
             raw_obj['section_entropy'] = lief_binary.tls.section.entropy
             raw_obj['section_vsize'] = lief_binary.tls.section.virtual_size
@@ -557,8 +530,6 @@ class TLSInfo(FeatureType):
             raw_obj['section_pointer_to_line_numbers'] = lief_binary.tls.section.pointerto_line_numbers
             raw_obj['section_number_of_relocations'] = lief_binary.tls.section.numberof_relocations
             raw_obj['section_number_of_line_numbers'] = lief_binary.tls.section.numberof_line_numbers
-            raw_obj['section_characteristics'] = [str(i).split('.')[-1] for i in
-                                                  lief_binary.tls.section.characteristics_lists]
 
         return raw_obj
 
@@ -567,16 +538,12 @@ class TLSInfo(FeatureType):
             raw_obj['addressof_callbacks'],
             raw_obj['addressof_index'],
             raw_obj['addressof_raw_data'],  # dim 2
-            FeatureHasher(16, input_type="string").transform([raw_obj['callbacks']]).toarray()[0],
             raw_obj['characteristics'],
-            FeatureHasher(16, input_type="string").transform([raw_obj['data_template']]).toarray()[0],
             raw_obj['has_data_directory'],
             raw_obj['directory_has_section'],
             raw_obj['directory_rva'],
             raw_obj['directory_size'],
-            FeatureHasher(16, input_type="string").transform([raw_obj['directory_type']]).toarray()[0],
             raw_obj['has_section'],
-            FeatureHasher(16, input_type="string").transform([raw_obj['section_name']]).toarray()[0],
             raw_obj['section_size'],
             raw_obj['section_entropy'],
             raw_obj['section_vsize'],
@@ -585,7 +552,6 @@ class TLSInfo(FeatureType):
             raw_obj['section_pointer_to_line_numbers'],
             raw_obj['section_number_of_relocations'],
             raw_obj['section_number_of_line_numbers'],
-            FeatureHasher(16, input_type="string").transform([raw_obj['section_characteristics']]).toarray()[0],
             raw_obj['sizeof_zero_fill'],
         ]).astype(np.float32)
 
@@ -598,22 +564,20 @@ class SignatureInfo(FeatureType):
         super(FeatureType, self).__init__()
 
     def raw_features(self, bytez, lief_binary):
-        raw_obj = {}
         raw_obj = {
             'digest_algorithm': "",
             'version': 0,
-            'numberof_certificates': 0,
         }
+
         if lief_binary is None:
             return raw_obj
-        raw_obj['digest_algorithm'] = lief_binary.signature.digest_algorithm
+
         raw_obj['version'] = lief_binary.signature.version
         raw_obj['numberof_certificates'] = len(lief_binary.signature.certificates)
         return raw_obj
 
     def process_raw_features(self, raw_obj):
         return np.hstack([
-            FeatureHasher(16, input_type="string").transform([raw_obj['digest_algorithm']]).toarray()[0],
             raw_obj['version'],
             raw_obj['numberof_certificates']
         ]).astype(np.float32)
@@ -662,39 +626,39 @@ class SignerInfo(FeatureType):
     def raw_features(self, bytez, lief_binary):
         raw_obj = {}
         raw_obj = {
-            'digest_algorithm': "",
+            #'digest_algorithm': "",
             # 'encrypted_digest': [],
             # 'issuer': ('', []),
-            'signature_algorithm': "",
+            #'signature_algorithm': "",
             'version': 0
         }
         if lief_binary is None:
             return raw_obj
 
-        raw_obj['digest_algorithm'] = lief_binary.signature.signer_info.digest_algorithm
-        raw_obj['encrypted_digest'] = lief_binary.signature.signer_info.encrypted_digest
+        #raw_obj['digest_algorithm'] = lief_binary.signature.signer_info.digest_algorithm
+        #raw_obj['encrypted_digest'] = lief_binary.signature.signer_info.encrypted_digest
         # raw_obj['issuer'] = lief_binary.signature.signer_info.issuer
         # raw_obj['signature_algorithm'] = lief_binary.signature.signer_info.signature_algorithm
         raw_obj['version'] = lief_binary.signature.signer_info.version
 
-        if raw_obj['encrypted_digest'] == []:
-            raw_obj['encrypted_digest'] = [0 for i in range(256)]
+        #if raw_obj['encrypted_digest'] == []:
+        #    raw_obj['encrypted_digest'] = [0 for i in range(256)]
 
         return raw_obj
 
     def process_raw_features(self, raw_obj):
         return np.hstack([
-            FeatureHasher(16, input_type="string").transform([raw_obj['digest_algorithm']]).toarray()[0],
-            # raw_obj['encrypted_digest'], # dim 256
-            # FeatureHasher(16, input_type="string").transform([raw_obj['issuer']]).toarray()[0],
-            FeatureHasher(16, input_type="string").transform([raw_obj['signature_algorithm']]).toarray()[0],
+            #FeatureHasher(16, input_type="string").transform([raw_obj['digest_algorithm']]).toarray()[0],
+            ## raw_obj['encrypted_digest'], # dim 256
+            ## FeatureHasher(16, input_type="string").transform([raw_obj['issuer']]).toarray()[0],
+            #FeatureHasher(16, input_type="string").transform([raw_obj['signature_algorithm']]).toarray()[0],
             raw_obj['version']
         ]).astype(np.float32)
 
 
 class DosHeaderInfo(FeatureType):
     name = 'dos_header'
-    dim = 16 + 32
+    dim = 16
 
     def __init__(self):
         super(FeatureType, self).__init__()
@@ -711,7 +675,7 @@ class DosHeaderInfo(FeatureType):
             'initial_relative_cs': 0,
             'initial_relative_ss': 0,
             'initial_sp': 0,
-            'magic': "",
+            #'magic': "",
             'maximum_extra_paragraphs': 0,
             'minimum_extra_paragraphs': 0,
             'numberof_relocation': 0,
@@ -721,7 +685,7 @@ class DosHeaderInfo(FeatureType):
             'used_bytes_in_the_last_page': 0,
         }
         raw_obj['dos_stub'] = {
-            'dos_stub': [],
+            #'dos_stub': [],
         }
         if lief_binary is None:
             return raw_obj
@@ -735,7 +699,7 @@ class DosHeaderInfo(FeatureType):
         raw_obj['dos_header']['initial_relative_cs'] = lief_binary.dos_header.initial_relative_cs
         raw_obj['dos_header']['initial_relative_ss'] = lief_binary.dos_header.initial_relative_ss
         raw_obj['dos_header']['initial_sp'] = lief_binary.dos_header.initial_sp
-        raw_obj['dos_header']['magic'] = str(lief_binary.dos_header.magic).split('.')[-1]
+        #raw_obj['dos_header']['magic'] = str(lief_binary.dos_header.magic).split('.')[-1]
         raw_obj['dos_header']['maximum_extra_paragraphs'] = lief_binary.dos_header.maximum_extra_paragraphs
         raw_obj['dos_header']['minimum_extra_paragraphs'] = lief_binary.dos_header.minimum_extra_paragraphs
         raw_obj['dos_header']['numberof_relocation'] = lief_binary.dos_header.numberof_relocation
@@ -743,7 +707,7 @@ class DosHeaderInfo(FeatureType):
         raw_obj['dos_header']['oem_info'] = lief_binary.dos_header.oem_info
         raw_obj['dos_header']['overlay_number'] = lief_binary.dos_header.overlay_number
         raw_obj['dos_header']['used_bytes_in_the_last_page'] = lief_binary.dos_header.used_bytes_in_the_last_page
-        raw_obj['dos_stub']['dos_stub'] = [str(c).split('.')[-1] for c in lief_binary.dos_stub]
+        #raw_obj['dos_stub']['dos_stub'] = [str(c).split('.')[-1] for c in lief_binary.dos_stub]
         return raw_obj
 
     def process_raw_features(self, raw_obj):
@@ -757,7 +721,7 @@ class DosHeaderInfo(FeatureType):
             raw_obj['dos_header']['initial_relative_cs'],
             raw_obj['dos_header']['initial_relative_ss'],
             raw_obj['dos_header']['initial_sp'],
-            FeatureHasher(16, input_type="string").transform([raw_obj['dos_header']['magic']]).toarray()[0],
+            #FeatureHasher(16, input_type="string").transform([raw_obj['dos_header']['magic']]).toarray()[0],
             raw_obj['dos_header']['maximum_extra_paragraphs'],
             raw_obj['dos_header']['minimum_extra_paragraphs'],
             raw_obj['dos_header']['numberof_relocation'],
@@ -765,7 +729,7 @@ class DosHeaderInfo(FeatureType):
             raw_obj['dos_header']['oem_info'],
             raw_obj['dos_header']['overlay_number'],
             raw_obj['dos_header']['used_bytes_in_the_last_page'],
-            FeatureHasher(16, input_type="string").transform([raw_obj['dos_stub']['dos_stub']]).toarray()[0],
+            #FeatureHasher(16, input_type="string").transform([raw_obj['dos_stub']['dos_stub']]).toarray()[0],
         ]).astype(np.float32)
 
 
@@ -786,7 +750,7 @@ class DebugInfo(FeatureType):
             'pointerto_rawdata': 0,
             'sizeof_data': 0,
             'timestamp': 0,
-            'type': "",
+            #'type': "",
         }
         if lief_binary is None or lief_binary.has_debug == 0:
             return raw_obj
@@ -798,7 +762,7 @@ class DebugInfo(FeatureType):
             raw_obj['debug']['pointerto_rawdata'] = lief_binary.debug.pointerto_rawdata
             raw_obj['debug']['sizeof_data'] = lief_binary.debug.sizeof_data
             raw_obj['debug']['timestamp'] = lief_binary.debug.timestamp
-            raw_obj['debug']['type'] = str(lief_binary.debug.type).split('.')[-1]
+            #raw_obj['debug']['type'] = str(lief_binary.debug.type).split('.')[-1]
         except:
             pass
         return raw_obj
@@ -812,7 +776,7 @@ class DebugInfo(FeatureType):
             raw_obj['debug']['pointerto_rawdata'],
             raw_obj['debug']['sizeof_data'],
             raw_obj['debug']['timestamp'],
-            FeatureHasher(16, input_type="string").transform([[raw_obj['debug']['type']]]).toarray()[0],
+            #FeatureHasher(16, input_type="string").transform([[raw_obj['debug']['type']]]).toarray()[0],
         ]).astype(np.float32)
 
 
@@ -928,7 +892,7 @@ class ResourceInfo(FeatureType):
             'is_directory': False,
             'major_version': 0,
             'minor_version': 0,
-            'name': "",
+            #'name': "",
             'numberof_id_entries': 0,
             'numberof_name_entries': 0,
             'time_date_stamp': 0,
@@ -946,7 +910,7 @@ class ResourceInfo(FeatureType):
         raw_obj['resources']['is_directory'] = lief_binary.resources.is_directory
         raw_obj['resources']['major_version'] = lief_binary.resources.major_version
         raw_obj['resources']['minor_version'] = lief_binary.resources.minor_version
-        raw_obj['resources']['name'] = lief_binary.resources.name
+        #raw_obj['resources']['name'] = lief_binary.resources.name
         raw_obj['resources']['numberof_id_entries'] = lief_binary.resources.numberof_id_entries
         raw_obj['resources']['numberof_name_entries'] = lief_binary.resources.numberof_name_entries
         raw_obj['resources']['time_date_stamp'] = lief_binary.resources.time_date_stamp
@@ -962,7 +926,7 @@ class ResourceInfo(FeatureType):
             raw_obj['resources']['is_directory'],
             raw_obj['resources']['major_version'],
             raw_obj['resources']['minor_version'],
-            FeatureHasher(16, input_type="string").transform([raw_obj['resources']['name']]).toarray()[0],
+            #FeatureHasher(16, input_type="string").transform([raw_obj['resources']['name']]).toarray()[0],
             raw_obj['resources']['numberof_id_entries'],
             raw_obj['resources']['numberof_name_entries'],
             raw_obj['resources']['time_date_stamp'],
@@ -1066,38 +1030,38 @@ class OpcodeInfo(FeatureType):
         return np.hstack([op_list_count])[0]
 
 
-class AuthenticatedAttributesInfo(FeatureType):
-    name = 'authenticated_attributes'
-    dim = 48  # +16(message_digest)
-
-    def __init__(self):
-        super(FeatureType, self).__init__()
-
-    def raw_features(self, bytez, lief_binary):
-        raw_obj = {
-            'content_type': "",
-            'more_info': "",
-            'program_name': ""
-        }
-        if lief_binary is None:
-            return raw_obj
-
-        raw_obj['content_type'] = lief_binary.signature.signer_info.authenticated_attributes.content_type
-        raw_obj['more_info'] = lief_binary.signature.signer_info.authenticated_attributes.more_info
-        raw_obj['program_name'] = lief_binary.signature.signer_info.authenticated_attributes.program_name
-        return raw_obj
-
-    def process_raw_features(self, raw_obj):
-        return np.hstack([
-            FeatureHasher(16, input_type="string").transform([raw_obj['content_type']]).toarray()[0],
-            FeatureHasher(16, input_type="string").transform([raw_obj['more_info']]).toarray()[0],
-            FeatureHasher(16, input_type="string").transform([raw_obj['program_name']]).toarray()[0]
-        ]).astype(np.float32)
+#class AuthenticatedAttributesInfo(FeatureType):
+#    name = 'authenticated_attributes'
+#    dim = 48  # +16(message_digest)
+#
+#    def __init__(self):
+#        super(FeatureType, self).__init__()
+#
+#    def raw_features(self, bytez, lief_binary):
+#        raw_obj = {
+#            'content_type': "",
+#            'more_info': "",
+#            'program_name': ""
+#        }
+#        if lief_binary is None:
+#            return raw_obj
+#
+#        raw_obj['content_type'] = lief_binary.signature.signer_info.authenticated_attributes.content_type
+#        raw_obj['more_info'] = lief_binary.signature.signer_info.authenticated_attributes.more_info
+#        raw_obj['program_name'] = lief_binary.signature.signer_info.authenticated_attributes.program_name
+#        return raw_obj
+#
+#    def process_raw_features(self, raw_obj):
+#        return np.hstack([
+#            FeatureHasher(16, input_type="string").transform([raw_obj['content_type']]).toarray()[0],
+#            FeatureHasher(16, input_type="string").transform([raw_obj['more_info']]).toarray()[0],
+#            FeatureHasher(16, input_type="string").transform([raw_obj['program_name']]).toarray()[0]
+#        ]).astype(np.float32)
 
 
 class PDBInfo(FeatureType):
     name = 'code_view'
-    dim = 49
+    dim = 2
 
     def __init__(self):
         super(FeatureType, self).__init__()
@@ -1106,24 +1070,24 @@ class PDBInfo(FeatureType):
         raw_obj = {}
         raw_obj['code_view'] = {
             'age': 0,
-            'cv_signature': "",
-            'filename': "",
+            #'cv_signature': "",
+            #'filename': "",
             'signature': [],
         }
         if lief_binary is None:
             return raw_obj
 
         raw_obj['age'] = lief_binary.debug.code_view.age
-        raw_obj['cv_signature'] = str(lief_binary.debug.code_view.cv_signature).split('.')[-1]
-        raw_obj['filename'] = str(lief_binary.debug.code_view.filename).split('\\')[-1].split('.')[0]
+        #raw_obj['cv_signature'] = str(lief_binary.debug.code_view.cv_signature).split('.')[-1]
+        #raw_obj['filename'] = str(lief_binary.debug.code_view.filename).split('\\')[-1].split('.')[0]
         raw_obj['signature'] = lief_binary.debug.code_view.signature
         return raw_obj
 
     def process_raw_features(self, raw_obj):
         return np.hstack([
             raw_obj['age'],
-            FeatureHasher(16, input_type="string").transform([raw_obj['cv_signature']]).toarray()[0],
-            FeatureHasher(16, input_type="string").transform([raw_obj['filename']]).toarray()[0],
+            #FeatureHasher(16, input_type="string").transform([raw_obj['cv_signature']]).toarray()[0],
+            #FeatureHasher(16, input_type="string").transform([raw_obj['filename']]).toarray()[0],
             raw_obj['signature'],
         ]).astype(np.float32)
 
@@ -1205,7 +1169,7 @@ class PEFeatureExtractor(object):
             ContentInfo(),
             SignerInfo(),
             DosHeaderInfo(),
-            AuthenticatedAttributesInfo(),
+            #:AuthenticatedAttributesInfo(),
             DebugInfo(),
             ResourceInfo(),
             #RichHeaderInfo(),
