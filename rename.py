@@ -2,27 +2,21 @@ import os
 import sys
 
 def rename():
-    file_path= sys.argv[1] #폴더 경로
-    file_names= os.listdir(file_path)
-    # print(file_names)
-    i=0
-    j=0
-    for name in file_names:
-        #src = os.path.join(file_path, name)
-        #print(file_names[i])
-        if 'test' in file_names[i]:
-            print(file_names[i])
-            src = os.path.join(file_path, name)
-            dst = "test_features_" + str(j) + ".jsonl"
-            # dst = str(i)+".jsonl"
-            dst = os.path.join(file_path, dst)
-            os.rename(src, dst)
-            j+=1
-        i+=1
+    folder_path= sys.argv[1] #폴더 경로
+    file_names= os.listdir(folder_path)
 
-def combinebinary():
-    file_path = sys.argv[1] #폴더 경로
+    train=round(len(file_names) / 10 * 7)
+    test= len(file_names) - train
+
+    for name in range(0,train):
+        src = os.path.join(folder_path, file_names[name])
+        dst = os.path.join(folder_path, "train_features_{}.jsonl".format(name))
+        os.rename(src, dst)
+
+    for name in range(train, len(file_names)):
+        src = os.path.join(folder_path, file_names[name])
+        dst = os.path.join(folder_path, "test_features_{}.jsonl".format(name))
+        os.rename(src, dst)
 
 if __name__=="__main__":
     rename()
-    #combinebinary()
